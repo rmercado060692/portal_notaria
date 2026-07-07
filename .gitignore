@@ -14,6 +14,7 @@ frontend/build/
 node_modules/
 build/
 dist/
+backend/staticfiles/
 __pycache__/
 *.pyc
 *.pyo
