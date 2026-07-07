@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(circle at top left, rgba(168, 132, 61, 0.08), transparent 22%),
+    linear-gradient(180deg, #fbfaf7 0%, #f7f5f2 100%);
+  color: #1E1E1E;
+  min-height: 100vh;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+@layer components {
+  .app-card {
+    @apply rounded-3xl border border-white/70 bg-white shadow-card backdrop-blur-sm;
+  }
+
+  .app-panel {
+    @apply rounded-[28px] border border-notary-100/70 bg-white/95 shadow-panel backdrop-blur-sm;
+  }
+
+  .app-section-title {
+    @apply font-display text-xl font-bold tracking-tight text-neutral-900;
+  }
+
+  .app-subtle {
+    @apply text-sm text-neutral-600;
+  }
+
+  .app-chip {
+    @apply inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold;
+  }
+
+  .app-input {
+    @apply w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3.5 text-neutral-900 shadow-sm outline-none transition duration-200 placeholder:text-neutral-400 focus:border-notary-300 focus:ring-4 focus:ring-notary-100/80;
+  }
+
+  .app-button-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-notary-800 px-5 py-3 text-sm font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5 hover:bg-notary-700 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .app-button-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-700 transition duration-200 hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50;
+  }
+
+  .app-button-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-gold-400;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-2xl bg-gradient-to-r from-neutral-100 via-white to-neutral-100 bg-[length:200%_100%];
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f4;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d6d3d1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
