@@ -8,8 +8,8 @@ Plataforma web moderna y segura que permite a los clientes de la notaría ver el
 - Framework: Django 5.1
 - API: Django REST Framework
 - Autenticación: JWT (JSON Web Tokens)
-- Base de datos propia: MySQL
-- Conexión a SIGNO: MySQL (solo lectura)
+- `default`: PostgreSQL para el portal
+- `signo`: MariaDB solo lectura para SIGNO
 
 ### Frontend (React + TypeScript + TailwindCSS)
 - Framework: React 18
@@ -77,8 +77,8 @@ cp .env.example .env
 ```
 
 5. Configurar bases de datos:
-   - Base propia: MySQL (para usuarios del portal)
-   - Base SIGNO: MySQL/MariaDB (solo lectura)
+   - `default`: PostgreSQL (para usuarios, sesiones, logs, notificaciones y datos propios del portal)
+   - `signo`: MariaDB (solo lectura para SIGNO)
 
 6. Realizar migraciones:
 ```bash
@@ -169,7 +169,7 @@ npm start
 ## Conexión a SIGNO
 
 El portal se conecta a la base de datos de SIGNO en modo **solo lectura**. Se recomienda:
-1. Crear un usuario MySQL específico para el portal
+1. Crear un usuario MariaDB específico de solo lectura para SIGNO
 2. Asignar únicamente permisos SELECT
 3. No exponer la base de datos de SIGNO directamente a internet
 
