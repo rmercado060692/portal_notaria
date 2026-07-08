@@ -4,11 +4,14 @@ const target = process.env.PORTAL_BACKEND_ORIGIN || 'http://127.0.0.1:8000';
 
 module.exports = function setupProxy(app) {
   app.use(
-    '/api',
+    '/portal-api',
     createProxyMiddleware({
       target,
       changeOrigin: true,
       secure: false,
+      pathRewrite: {
+        '^/portal-api': '',
+      },
     })
   );
 };
