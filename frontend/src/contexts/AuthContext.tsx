@@ -18,7 +18,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isAdmin = !!user && (user.is_superuser || user.is_staff || user.role === 'ADMIN' || user.role === 'SUPERADMIN');
+  const isAdmin = 
+    user?.is_superuser === true || 
+    user?.is_staff === true || 
+    user?.role === "ADMIN" || 
+    user?.role === "SUPERADMIN";
+
+  console.log("USER ACTUAL:", user);
+  console.log("IS ADMIN:", isAdmin);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -45,7 +52,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     console.log('Respuesta del login:', response);
     localStorage.setItem('access_token', response.access);
     localStorage.setItem('refresh_token', response.refresh);
-    setUser(response.user);
+    
+    // Después del login, llamar a /me para obtener los datos actualizados
+    try {
+      const userData = await authService.getMe();
+      console.log('Datos del usuario después del login:', userData);
+      setUser(userData);
+    } catch (error) {
+      console.error('Error al obtener datos del usuario después del login:', error);
+      setUser(response.user);
+    }
   };
 
   const logout = async () => {
@@ -57,17 +73,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Error closing session on server:', error);
       }
     }
+    // Limpiar todo el storage
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.clear();
     sessionStorage.clear();
     setUser(null);
   };
 
   const refreshUser = async () => {
-    if (user) {
+    try {
       const userData = await authService.getMe();
       console.log('Datos del usuario actualizados:', userData);
       setUser(userData);
+    } catch (error) {
+      console.error('Error al actualizar datos del usuario:', error);
     }
   };
 
