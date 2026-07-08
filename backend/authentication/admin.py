@@ -18,10 +18,11 @@ class PortalUserAdmin(BaseUserAdmin):
     search_fields = ['username', 'email']
     readonly_fields = ['last_login_at', 'created_at', 'updated_at']
     
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Información adicional', {
-            'fields': ('client', 'role', 'must_change_password', 'last_login_at'),
-        }),
+    fieldsets = (
+        (None, {'fields': ('username', 'email', 'password')}),
+        ('Permisos', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Información del Portal', {'fields': ('client', 'role', 'must_change_password', 'last_login_at')}),
+        ('Fechas importantes', {'fields': ('created_at', 'updated_at')}),
     )
     
     add_fieldsets = (
