@@ -8,7 +8,10 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  Users,
+  ChevronRight,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { Layout, TramiteCard } from '../components';
 import { tramiteAPI } from '../api/services';
@@ -52,7 +55,7 @@ const DashboardSkeleton = () => (
 );
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [tramites, setTramites] = useState<TramiteListItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,6 +149,31 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {isAdmin && (
+          <section className="app-card p-8 transition duration-200 hover:-translate-y-1 hover:shadow-card-hover">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-5">
+                <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-gold-500 to-gold-700 text-white shadow-card">
+                  <Users className="h-10 w-10" />
+                </div>
+                <div>
+                  <h2 className="font-display text-2xl font-bold text-neutral-900">Administración de Clientes</h2>
+                  <p className="mt-2 text-sm leading-7 text-neutral-600">
+                    Gestiona los usuarios del portal, clientes y sus asociaciones.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/admin/clients"
+                className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-600 px-6 py-4 text-sm font-bold text-white shadow-card transition hover:-translate-y-1 hover:shadow-card-hover"
+              >
+                Entrar al panel administrativo
+                <ChevronRight className="h-5 w-5" />
+              </Link>
+            </div>
+          </section>
+        )}
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           {statCards.map((item) => {
