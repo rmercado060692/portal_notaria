@@ -67,7 +67,7 @@ const extractKardex = (title: string, message: string) => {
 const normalizeNotifications = (value: unknown): Notification[] => (Array.isArray(value) ? value : []);
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -278,7 +278,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <nav className="app-panel flex-1 space-y-2 px-4 py-4">
             {navItems.map(renderNavItem)}
 
-            {(user?.role === 'ADMIN' || user?.role === 'SUPERADMIN') && (
+            {isAdmin && (
               <Link
                 to="/admin/clients"
                 className={`mt-3 flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-semibold transition-all ${
@@ -436,7 +436,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <div className="space-y-2">
               {navItems.map(renderNavItem)}
-              {(user?.role === 'ADMIN' || user?.role === 'SUPERADMIN') && (
+              {isAdmin && (
                 <Link to="/admin/clients" onClick={() => setShowMobileMenu(false)} className="flex items-center justify-between rounded-2xl bg-gold-50 px-4 py-3.5 text-sm font-semibold text-gold-700">
                   <span>Panel administrativo</span>
                   <ChevronRight className="h-4 w-4" />

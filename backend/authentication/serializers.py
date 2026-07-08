@@ -21,7 +21,7 @@ class PortalUserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = PortalUser
-        fields = ['id', 'username', 'email', 'client', 'role', 'must_change_password', 'is_active', 'last_login_at', 'created_at']
+        fields = ['id', 'username', 'email', 'client', 'role', 'must_change_password', 'is_active', 'is_staff', 'is_superuser', 'last_login_at', 'created_at']
         read_only_fields = ['id', 'last_login_at', 'created_at', 'updated_at']
 
 
@@ -30,7 +30,7 @@ class CurrentUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PortalUser
-        fields = ['id', 'username', 'email', 'client', 'role', 'must_change_password', 'is_active', 'last_login_at', 'created_at']
+        fields = ['id', 'username', 'email', 'client', 'role', 'must_change_password', 'is_active', 'is_staff', 'is_superuser', 'last_login_at', 'created_at']
         read_only_fields = fields
 
 

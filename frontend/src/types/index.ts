@@ -135,6 +135,8 @@ export interface User {
   role: 'CLIENT' | 'ADMIN' | 'SUPERADMIN';
   must_change_password: boolean;
   is_active: boolean;
+  is_staff: boolean;
+  is_superuser: boolean;
   last_login_at?: string | null;
   created_at?: string;
   client?: PortalClient | null;
