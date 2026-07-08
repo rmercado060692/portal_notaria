@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/portal-api';
+const API_BASE_URL = '/portal-api';
 const APP_BASE_PATH = (process.env.PUBLIC_URL || '').replace(/\/$/, '');
 
 const buildAppUrl = (path: string) => {
