@@ -612,22 +612,22 @@ const TramiteDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {tramite.numescritura && (
-                <div>
-                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">
-                    Número de escritura
-                  </p>
-                  <p className="text-neutral-900 text-lg font-semibold">{tramite.numescritura}</p>
-                </div>
-              )}
-
-              <div>
+              {/* Contratantes */}
+              <div className="md:col-span-2">
                 <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5">
-                  Contacto del expediente
+                  Contratantes
                 </p>
-                <p className="text-neutral-900 text-lg font-semibold">
-                  {normalizeText(tramite.contacto) || 'No informado en SIGNO'}
-                </p>
+                {tramite.contratantes && tramite.contratantes.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {tramite.contratantes.map((contratante, index) => (
+                      <span key={`${contratante.idcontratante || contratante.document_number || contratante.full_name}-${index}`} className="inline-flex items-center gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm font-semibold text-neutral-900">
+                        {contratante.full_name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-600">No hay contratantes informados en SIGNO</p>
+                )}
               </div>
             </div>
           </DetailSection>
@@ -678,27 +678,6 @@ const TramiteDetailPage: React.FC = () => {
                 Aún no existen movimientos registrales reales para este trámite.
               </div>
             )}
-          </DetailSection>
-
-          {/* Historial interno */}
-          <DetailSection
-            title="Historial de Actividades"
-            icon={<FolderOpen className="w-6 h-6 text-notary-700" />}
-            isOpen={openSections.internal}
-            onToggle={() => toggleSection('internal')}
-          >
-            <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-5 py-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-neutral-600 space-y-2">
-                  <p className="font-medium text-neutral-900">Solo se muestra información real.</p>
-                  <p>
-                    SIGNO no está devolviendo un historial interno detallado por eventos para este kardex.
-                    Para evitar datos ficticios, esta sección permanecerá vacía hasta que esa fuente esté disponible.
-                  </p>
-                </div>
-              </div>
-            </div>
           </DetailSection>
         </div>
 
@@ -930,32 +909,6 @@ const TramiteDetailPage: React.FC = () => {
                 </div>
               )}
             </div>
-          </DetailSection>
-
-          {/* Contratantes */}
-          <DetailSection
-            title="Contratantes"
-            icon={<Users className="w-6 h-6 text-notary-700" />}
-            isOpen={openSections.contractors}
-            onToggle={() => toggleSection('contractors')}
-          >
-            {tramite.contratantes && tramite.contratantes.length > 0 ? (
-              <div className="space-y-4">
-                {tramite.contratantes.map((contratante, index) => (
-                  <div key={`${contratante.idcontratante || contratante.document_number || contratante.full_name}-${index}`} className="p-5 border border-neutral-200 rounded-xl">
-                    <p className="text-sm font-bold text-neutral-900">{contratante.full_name}</p>
-                    <div className="mt-1 space-y-1 text-xs text-neutral-500">
-                      {contratante.document_number && <p>Documento: {contratante.document_number}</p>}
-                      {getReadableCondition(contratante.condition) && <p>Condición: {getReadableCondition(contratante.condition)}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-5 py-4 text-sm text-neutral-500">
-                SIGNO no devolvió contratantes para este trámite.
-              </div>
-            )}
           </DetailSection>
         </div>
       </div>

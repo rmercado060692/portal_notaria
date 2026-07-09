@@ -107,6 +107,8 @@ const Dashboard: React.FC = () => {
   const summary = useMemo(() => getDashboardSummary(tramites), [tramites]);
   const displayName = user?.client?.full_name || user?.username || 'Cliente';
   const documentLabel = user?.client ? `${user.client.document_type} ${user.client.document_number}` : 'Documento no registrado';
+  const publicAssetUrl = (assetPath: string) => `${(process.env.PUBLIC_URL || '').replace(/\/$/, '')}/${assetPath.replace(/^\//, '')}`;
+  const logoSrc = publicAssetUrl('logo-notaria.jpeg');
 
   if (loading) {
     return (
@@ -119,33 +121,21 @@ const Dashboard: React.FC = () => {
   return (
     <Layout>
       <div className="space-y-8">
-        <section className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-notary-900 via-notary-800 to-notary-700 px-7 py-8 text-white shadow-panel sm:px-10 sm:py-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,132,61,0.22),transparent_28%)]" />
-          <div className="absolute -right-16 top-0 h-48 w-48 rounded-full bg-gold-400/10 blur-3xl" />
-          <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-notary-100">
-                <Sparkles className="h-4 w-4 text-gold-300" />
-                Plataforma oficial del cliente
-              </div>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+        <section className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-notary-900 via-notary-800 to-notary-700 px-6 py-7 text-white shadow-panel sm:px-8 sm:py-9">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,132,61,0.25),transparent_35%)]" />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center">
+            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-[28px] border-2 border-white/20 bg-white/10 shadow-panel">
+              <img src={logoSrc} alt="Logo Notaría Mendoza Vásquez" className="h-full w-full object-contain p-2" />
+            </div>
+            
+            <div className="flex-1">
+              <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-[34px]">
                 Bienvenido, {displayName}
               </h1>
-              <p className="mt-2 text-base text-notary-100 sm:text-lg">{documentLabel}</p>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-notary-100/95 sm:text-base">
-                Consulta el estado de tus trámites en tiempo real, revisa documentos disponibles y sigue cada avance registrado por la Notaría Mendoza Vásquez.
+              <p className="mt-2 text-base font-semibold text-notary-100">{documentLabel}</p>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-notary-100/90">
+                Consulta el estado de tus trámites notariales de manera segura.
               </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 backdrop-blur-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-notary-100">Portal seguro</p>
-                <p className="mt-2 text-sm leading-6 text-white/90">Tu información está protegida y se muestra en modo solo lectura.</p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 backdrop-blur-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-notary-100">Fuente de datos</p>
-                <p className="mt-2 text-sm leading-6 text-white/90">Los avances reflejan los registros internos de la notaría y la información consultada en SIGNO.</p>
-              </div>
             </div>
           </div>
         </section>
