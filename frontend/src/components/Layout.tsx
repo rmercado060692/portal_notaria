@@ -33,7 +33,7 @@ type NavItem = {
 };
 
 const publicAssetUrl = (assetPath: string) => `${(process.env.PUBLIC_URL || '').replace(/\/$/, '')}/${assetPath.replace(/^\//, '')}`;
-const logoSrc = publicAssetUrl('logo-notaria.jpeg');
+const logoSrc = publicAssetUrl('logo-em.png');
 
 const getNotificationType = (text: string): 'success' | 'info' | 'warning' => {
   const normalized = text.toUpperCase();
