@@ -13,6 +13,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import type { User as PortalUser } from '../types';
 
 const publicAssetUrl = (assetPath: string) =>
   `${(process.env.PUBLIC_URL || '').replace(/\/$/, '')}/${assetPath.replace(/^\//, '')}`;
@@ -21,11 +22,29 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const buildDisplayName = (user?: PortalUser | null) => {
+  const clientName = user?.client?.full_name?.trim();
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+  return clientName || fullName || user?.username || 'Cliente';
+};
+
+const buildDocumentLabel = (user?: PortalUser | null) => {
+  if (user?.client?.document_number) {
+    return `${user.client.document_type || 'DNI'} ${user.client.document_number}`;
+  }
+  if (user?.document_number) {
+    return `DNI ${user.document_number}`;
+  }
+  return null;
+};
+
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const displayName = buildDisplayName(user);
+  const documentLabel = buildDocumentLabel(user);
 
   const handleLogout = () => {
     logout();
@@ -36,13 +55,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { to: '/dashboard', label: 'Dashboard', icon: Home },
     { to: '/tramites', label: 'Mis trámites', icon: FileText },
     { to: '/notificaciones', label: 'Notificaciones', icon: Bell },
-    { to: '/perfil', label: 'Mi Perfil', icon: User },
+    { to: '/profile', label: 'Mi Perfil', icon: User },
     { to: '/faq', label: 'Preguntas frecuentes', icon: HelpCircle },
     { to: '/contacto', label: 'Contacto', icon: Mail },
   ];
 
   if (isAdmin) {
-    menuItems.splice(1, 0, { to: '/admin', label: 'Panel de Administración', icon: Shield });
+    menuItems.splice(1, 0, { to: '/admin/clients', label: 'Panel de Administración', icon: Shield });
   }
 
   return (
@@ -93,12 +112,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <User className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
-                    {user.first_name || user.username}
+                  <p className="text-sm font-semibold leading-snug text-white break-words">
+                    {displayName}
                   </p>
-                  <p className="text-xs text-notary-200 truncate">
-                    {user.document_number || user.email}
-                  </p>
+                  {documentLabel && (
+                    <p className="mt-1 text-xs text-notary-200 break-words">
+                      {documentLabel}
+                    </p>
+                  )}
                   <span className="inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-notary-500 text-white">
                     {isAdmin ? 'Personal de Notaría' : 'Cliente'}
                   </span>
@@ -112,7 +133,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <ul className="space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.to;
+                const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
                 return (
                   <li key={item.to}>
                     <NavLink
@@ -180,10 +201,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="hidden sm:flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-semibold text-neutral-900">
-                    {user.first_name || user.username}
+                    {displayName}
                   </p>
                   <p className="text-xs text-neutral-500">
-                    {isAdmin ? 'Administrador' : 'Cliente'}
+                    {documentLabel || (isAdmin ? 'Administrador' : 'Cliente')}
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-notary-100 text-notary-600 rounded-full flex items-center justify-center">
@@ -192,8 +213,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             )}
             <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-neutral-600 hover:bg-neutral-100"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`${mobileMenuOpen ? 'inline-flex' : 'hidden'} lg:hidden p-2 rounded-lg text-neutral-600 hover:bg-neutral-100`}
             >
               <X className="w-6 h-6" />
             </button>

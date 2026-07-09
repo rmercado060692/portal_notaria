@@ -149,6 +149,25 @@ const normalizeText = (value?: string | null) => {
   return stringValue === '' || stringValue === '0' ? null : stringValue;
 };
 
+const parseSortableDate = (value?: string | null) => {
+  const normalized = normalizeText(value);
+  if (!normalized) return 0;
+
+  const slashDate = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slashDate) {
+    const [, day, month, year] = slashDate;
+    return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  }
+
+  const isoDate = Date.parse(normalized);
+  if (!Number.isNaN(isoDate)) {
+    return isoDate;
+  }
+
+  const numericDate = Number(normalized);
+  return Number.isNaN(numericDate) ? 0 : numericDate;
+};
+
 const normalizeStatusKey = (status?: string | null) => {
   return String(status ?? '')
     .trim()
@@ -178,7 +197,7 @@ const buildRegistralTitles = (titles: EstadoRegistral[]): RegistralTitleView[] =
 
   [...titles].forEach((title, index) => {
     const history = [...(title.historial || [])].sort(
-      (a, b) => (Number(b.fecha) || 0) - (Number(a.fecha) || 0) || (b.itemmov || 0) - (a.itemmov || 0)
+      (a, b) => parseSortableDate(b.fecha) - parseSortableDate(a.fecha) || (b.itemmov || 0) - (a.itemmov || 0)
     );
     const latest = history[0];
     const normalizedKey = normalizeRegistralKey(title.titulo) || `SIN-TITULO-${index}`;
@@ -197,7 +216,7 @@ const buildRegistralTitles = (titles: EstadoRegistral[]): RegistralTitleView[] =
     }
 
     const mergedHistory = [...(existing.historial || []), ...history].sort(
-      (a, b) => (Number(b.fecha) || 0) - (Number(a.fecha) || 0) || (b.itemmov || 0) - (a.itemmov || 0)
+      (a, b) => parseSortableDate(b.fecha) - parseSortableDate(a.fecha) || (b.itemmov || 0) - (a.itemmov || 0)
     );
     const mergedLatest = mergedHistory[0];
 
@@ -220,7 +239,7 @@ const buildRegistralTitles = (titles: EstadoRegistral[]): RegistralTitleView[] =
     });
   });
 
-  return Array.from(groupedTitles.values()).sort((a, b) => (Number(b.fecha) || 0) - (Number(a.fecha) || 0));
+  return Array.from(groupedTitles.values()).sort((a, b) => parseSortableDate(b.fecha) - parseSortableDate(a.fecha));
 };
 
 const buildAvailablePdfDocuments = (tramite: TramiteDetail) => {
@@ -306,7 +325,25 @@ const TramiteDetailPage: React.FC = () => {
     () => buildRegistralTitles(tramite?.movimientos_rrpp || []),
     [tramite?.movimientos_rrpp]
   );
-  const latestRegistralActivity = registralTitles[0]?.latestHistory;
+  const registralTimeline = useMemo(
+    () =>
+      registralTitles
+        .flatMap((title) =>
+          (title.historial || []).map((item, index) => ({
+            title,
+            item,
+            index,
+          }))
+        )
+        .sort(
+          (a, b) =>
+            parseSortableDate(b.item.fecha) - parseSortableDate(a.item.fecha) ||
+            (b.item.itemmov || 0) - (a.item.itemmov || 0)
+        ),
+    [registralTitles]
+  );
+  const latestRegistralActivity = registralTimeline[0]?.item;
+  const latestRegistralTitle = registralTimeline[0]?.title;
   const currentStateTheme = getStatusTheme(latestRegistralActivity?.estado || tramite?.estado_general || 'INGRESADO');
   const currentClientState = tramite ? getClientFacingStatus(tramite) : 'En Notaría';
   const availablePdfDocuments = useMemo(
@@ -440,7 +477,9 @@ const TramiteDetailPage: React.FC = () => {
               <div className="rounded-xl bg-white/10 px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-notary-200 mb-1">Último movimiento registral</p>
                 <p className="text-sm font-semibold text-white">{latestRegistralActivity?.fecha || 'No disponible'}</p>
-                <p className="text-sm text-notary-100">{registralTitles[0]?.titulo || 'Sin movimiento SUNARP aún'}</p>
+                <p className="text-sm text-notary-100">
+                  {latestRegistralActivity?.estado || latestRegistralTitle?.titulo || 'Sin movimiento SUNARP aún'}
+                </p>
               </div>
             </div>
             <div className="w-full lg:max-w-xs rounded-2xl bg-white/10 border border-white/20 px-5 py-5">
@@ -531,40 +570,38 @@ const TramiteDetailPage: React.FC = () => {
             >
               {registralTitles.length > 0 ? (
                 <div className="space-y-0">
-                  {registralTitles.flatMap((title) => 
-                    (title.historial || []).map((item, index) => {
-                      const theme = getStatusTheme(item.estado);
-                      const isLast = index === (title.historial?.length || 0) - 1;
-                      const isLatestTitle = title === registralTitles[0] && index === 0;
+                  {registralTimeline.map(({ title, item }, index) => {
+                    const theme = getStatusTheme(item.estado);
+                    const isLast = index === registralTimeline.length - 1;
+                    const isLatestTitle = index === 0;
 
-                      return (
-                        <div key={`${title.titulo}-${item.idmovreg || index}`} className={`relative pl-10 pb-6 ${isLast ? 'pb-0' : ''}`}>
-                          {!isLast && <div className="absolute left-[11px] top-7 w-0.5 h-full bg-neutral-200" />}
-                          <div className={`absolute left-0 top-2 h-6 w-6 rounded-full ${theme.dot} ring-4 ring-white`} />
+                    return (
+                      <div key={`${title.titulo}-${item.idmovreg || index}`} className={`relative pl-10 pb-6 ${isLast ? 'pb-0' : ''}`}>
+                        {!isLast && <div className="absolute left-[11px] top-7 w-0.5 h-full bg-neutral-200" />}
+                        <div className={`absolute left-0 top-2 h-6 w-6 rounded-full ${theme.dot} ring-4 ring-white`} />
 
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <p className="text-base font-semibold text-neutral-900">{item.estado}</p>
-                              {isLatestTitle && (
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${theme.chip}`}>
-                                  Último movimiento
-                                </span>
-                              )}
-                            </div>
-                            <div className="space-y-1 text-sm text-neutral-600">
-                              <p><span className="font-medium text-neutral-700">Fecha:</span> {item.fecha || 'No disponible'}</p>
-                              <p><span className="font-medium text-neutral-700">Título:</span> {title.titulo}</p>
-                              {title.tramite && <p><span className="font-medium text-neutral-700">Acto:</span> {title.tramite}</p>}
-                              {title.seccion && <p><span className="font-medium text-neutral-700">Área:</span> {title.seccion}</p>}
-                              {normalizeText(title.observaciones) && (
-                                <p><span className="font-medium text-neutral-700">Observación:</span> {normalizeText(title.observaciones)}</p>
-                              )}
-                            </div>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <p className="text-base font-semibold text-neutral-900">{item.estado}</p>
+                            {isLatestTitle && (
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${theme.chip}`}>
+                                Último movimiento
+                              </span>
+                            )}
+                          </div>
+                          <div className="space-y-1 text-sm text-neutral-600">
+                            <p><span className="font-medium text-neutral-700">Fecha:</span> {item.fecha || 'No disponible'}</p>
+                            <p><span className="font-medium text-neutral-700">Título:</span> {title.titulo}</p>
+                            {title.tramite && <p><span className="font-medium text-neutral-700">Acto:</span> {title.tramite}</p>}
+                            {title.seccion && <p><span className="font-medium text-neutral-700">Área:</span> {title.seccion}</p>}
+                            {normalizeText(title.observaciones) && (
+                              <p><span className="font-medium text-neutral-700">Observación:</span> {normalizeText(title.observaciones)}</p>
+                            )}
                           </div>
                         </div>
-                      );
-                    })
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-5 py-6 text-sm text-neutral-500">

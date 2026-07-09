@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
+  AlertTriangle,
+  Building2,
   FolderOpen,
   CheckCircle,
-  Clock,
   AlertCircle,
-  FileText,
+  FileSearch,
   ChevronRight,
+  Landmark,
+  Search,
   Shield,
 } from 'lucide-react';
 import { Layout } from '../components/Layout';
@@ -14,36 +17,61 @@ import { StatsCard } from '../components/StatsCard';
 import { TramiteCard } from '../components/TramiteCard';
 import { tramiteAPI } from '../api/services';
 import { useAuth } from '../contexts/AuthContext';
-import type { TramiteListItem, TramiteStatsSummary } from '../types';
+import type { ApiResponse, TramiteListItem, TramitesResponse, User } from '../types';
+import {
+  getDashboardSummary,
+  isCompletedTramite,
+  isInNotaryTramite,
+  isInSunarpTramite,
+  isObservedTramite,
+  matchesTramiteSearch,
+} from '../utils/tramites';
 
 const publicAssetUrl = (assetPath: string) =>
   `${(process.env.PUBLIC_URL || '').replace(/\/$/, '')}/${assetPath.replace(/^\//, '')}`;
 
+type FilterState = 'all' | 'in-notary' | 'in-sunarp' | 'observed' | 'completed';
+
+const buildDisplayName = (user?: User | null) => {
+  const clientName = user?.client?.full_name?.trim();
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+  return clientName || fullName || user?.username || 'Cliente';
+};
+
+const buildDocumentLabel = (user?: User | null) => {
+  if (user?.client?.document_number) {
+    return `${user.client.document_type || 'DNI'} ${user.client.document_number}`;
+  }
+  if (user?.document_number) {
+    return `DNI ${user.document_number}`;
+  }
+  return 'Documento no registrado';
+};
+
 const DashboardPage: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<FilterState>('all');
   const [tramites, setTramites] = useState<TramiteListItem[]>([]);
-  const [summary, setSummary] = useState<TramiteStatsSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const tramitesRes = await tramiteAPI.getTramites();
+        setLoading(true);
+        setError('');
+        const tramitesRes: ApiResponse<TramitesResponse> = await tramiteAPI.getTramites();
         if (tramitesRes.success) {
           const tramitesData = tramitesRes.data;
           setTramites(tramitesData.tramites || []);
-          if (tramitesData.resumen) {
-            setSummary({
-              total: tramitesData.resumen.total,
-              en_proceso: tramitesData.resumen.en_proceso,
-              completados: tramitesData.resumen.concluidos,
-              observados: tramitesData.resumen.observados,
-            });
-          }
+        } else {
+          setError('No fue posible cargar tus trámites en este momento.');
         }
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+      } catch (requestError) {
+        console.error('Error fetching dashboard data:', requestError);
+        setError('No se pudo conectar con el portal. Verifica tu sesión o intenta nuevamente.');
       } finally {
         setLoading(false);
       }
@@ -52,8 +80,32 @@ const DashboardPage: React.FC = () => {
     fetchData();
   }, []);
 
+  const filteredTramites = useMemo(() => {
+    return tramites.filter((tramite) => {
+      const matchesSearch = matchesTramiteSearch(tramite, searchTerm);
+      if (!matchesSearch) return false;
+
+      switch (filter) {
+        case 'in-notary':
+          return isInNotaryTramite(tramite);
+        case 'in-sunarp':
+          return isInSunarpTramite(tramite);
+        case 'observed':
+          return isObservedTramite(tramite);
+        case 'completed':
+          return isCompletedTramite(tramite);
+        default:
+          return true;
+      }
+    });
+  }, [filter, searchTerm, tramites]);
+
+  const summary = useMemo(() => getDashboardSummary(tramites), [tramites]);
+  const displayName = buildDisplayName(user).toUpperCase();
+  const documentLabel = buildDocumentLabel(user);
+
   const statCards: {
-    key: keyof TramiteStatsSummary;
+    key: keyof typeof summary;
     label: string;
     icon: React.ReactNode;
     color: 'blue' | 'green' | 'gold' | 'notary' | 'neutral';
@@ -65,15 +117,15 @@ const DashboardPage: React.FC = () => {
       color: 'notary' as const,
     },
     {
-      key: 'completados',
-      label: 'Completados',
-      icon: <CheckCircle className="w-6 h-6" />,
-      color: 'green' as const,
+      key: 'enNotaria',
+      label: 'En Notaría',
+      icon: <Building2 className="w-6 h-6" />,
+      color: 'blue' as const,
     },
     {
-      key: 'en_proceso',
-      label: 'En Proceso',
-      icon: <Clock className="w-6 h-6" />,
+      key: 'enSunarp',
+      label: 'En SUNARP',
+      icon: <Landmark className="w-6 h-6" />,
       color: 'gold' as const,
     },
     {
@@ -82,6 +134,20 @@ const DashboardPage: React.FC = () => {
       icon: <AlertCircle className="w-6 h-6" />,
       color: 'neutral' as const,
     },
+    {
+      key: 'finalizados',
+      label: 'Finalizados',
+      icon: <CheckCircle className="w-6 h-6" />,
+      color: 'green' as const,
+    },
+  ];
+
+  const filters: Array<{ key: FilterState; label: string }> = [
+    { key: 'all', label: 'Todos' },
+    { key: 'in-notary', label: 'En Notaría' },
+    { key: 'in-sunarp', label: 'En SUNARP' },
+    { key: 'observed', label: 'Observados' },
+    { key: 'completed', label: 'Finalizados' },
   ];
 
   if (loading) {
@@ -108,8 +174,11 @@ const DashboardPage: React.FC = () => {
                 Bienvenido(a)
               </p>
               <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-3">
-                {user?.first_name || user?.username || 'Cliente'}
+                {displayName}
               </h1>
+              <p className="text-gold-100 text-sm sm:text-base font-semibold mb-3">
+                {documentLabel}
+              </p>
               <p className="text-notary-100 text-base sm:text-lg max-w-2xl">
                 Consulta el estado de tus trámites notariales en tiempo real y accede a la documentación disponible.
               </p>
@@ -142,7 +211,7 @@ const DashboardPage: React.FC = () => {
                 </p>
               </div>
               <Link
-                to="/admin"
+                to="/admin/clients"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-wine-700 font-semibold rounded-xl hover:bg-wine-50 transition-colors"
               >
                 Ir al panel
@@ -154,9 +223,9 @@ const DashboardPage: React.FC = () => {
 
         {/* Stats Grid */}
         <section>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
             {statCards.map((item) => {
-              const value = summary ? summary[item.key] : 0;
+              const value = summary[item.key];
               return (
                 <StatsCard
                   key={item.key}
@@ -170,28 +239,69 @@ const DashboardPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Recent Tramites */}
+        <section className="bg-white rounded-2xl border border-neutral-200 p-4 sm:p-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="relative w-full max-w-3xl">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar por Kardex, tipo de acto, titular, escritura..."
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 py-3 pl-12 pr-4 text-sm text-neutral-900 outline-none transition focus:border-notary-300 focus:bg-white focus:ring-2 focus:ring-notary-100"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {filters.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setFilter(item.key)}
+                  className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                    filter === item.key
+                      ? 'bg-notary-700 text-white shadow-sm'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-notary-50 hover:text-notary-700'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-2xl font-bold text-neutral-900">
-              Trámites Recientes
+              Mis Trámites
             </h2>
-            {tramites.length > 3 && (
+            {tramites.length > 0 && (
               <Link
                 to="/tramites"
                 className="text-sm font-semibold text-notary-600 hover:text-notary-700 flex items-center gap-1"
               >
-                Ver todos
+                Ver listado completo
                 <ChevronRight className="w-4 h-4" />
               </Link>
             )}
           </div>
 
-          {tramites.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {tramites.slice(0, 3).map((tramite) => (
+          {error ? (
+            <div className="bg-white rounded-2xl border border-red-200 p-8 text-center">
+              <AlertTriangle className="w-16 h-16 text-danger mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                No fue posible cargar tus trámites
+              </h3>
+              <p className="text-neutral-500">
+                {error}
+              </p>
+            </div>
+          ) : filteredTramites.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredTramites.map((tramite) => (
                 <TramiteCard
-                  key={tramite.kardex}
+                  key={`${tramite.kardex}-${tramite.idkardex}`}
                   tramite={tramite}
                   onClick={() => navigate(`/tramite/${tramite.kardex}`)}
                 />
@@ -199,12 +309,14 @@ const DashboardPage: React.FC = () => {
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-neutral-200 p-8 text-center">
-              <FileText className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
+              <FileSearch className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-                No tienes trámites aún
+                {tramites.length === 0 ? 'Aún no tienes trámites visibles en el portal' : 'No encontramos resultados con ese filtro'}
               </h3>
               <p className="text-neutral-500">
-                Cuando tengas trámites activos, los verás aquí.
+                {tramites.length === 0
+                  ? 'Cuando la notaría registre trámites asociados a tu documento, aparecerán aquí automáticamente.'
+                  : 'Prueba con otro texto de búsqueda o cambia el filtro para ver más resultados.'}
               </p>
             </div>
           )}

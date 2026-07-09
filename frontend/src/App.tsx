@@ -6,6 +6,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import TramiteDetail from './pages/TramiteDetail';
+import Tramites from './pages/Tramites';
+import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
 import AdminClients from './pages/AdminClients';
@@ -119,6 +121,22 @@ const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/tramites"
+        element={
+          <ProtectedRoute>
+            <Tramites />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notificaciones"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/tramite/:kardex"
         element={
           <ProtectedRoute>
@@ -128,6 +146,14 @@ const AppRoutes: React.FC = () => {
       />
       <Route
         path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/perfil"
         element={
           <ProtectedRoute>
             <Profile />
@@ -157,6 +183,10 @@ const AppRoutes: React.FC = () => {
             <Contacto />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/admin"
+        element={<Navigate to="/admin/clients" replace />}
       />
       <Route
         path="/admin/clients"
