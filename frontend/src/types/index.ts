@@ -111,6 +111,13 @@ export interface TramiteDetail {
   documentos_disponibles?: TramiteDocumentoDisponible[];
 }
 
+export interface TramiteStatsSummary {
+  total: number;
+  en_proceso: number;
+  completados: number;
+  observados: number;
+}
+
 export interface TramitesResponse {
   resumen: {
     total: number;
@@ -132,6 +139,9 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  document_number?: string | null;
   role: 'CLIENT' | 'ADMIN' | 'SUPERADMIN';
   must_change_password: boolean;
   is_active: boolean;

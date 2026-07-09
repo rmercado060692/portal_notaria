@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   FolderOpen,
@@ -8,21 +8,19 @@ import {
   FileText,
   ChevronRight,
   Shield,
-  User,
 } from 'lucide-react';
 import { Layout } from '../components/Layout';
 import { StatsCard } from '../components/StatsCard';
 import { TramiteCard } from '../components/TramiteCard';
 import { tramiteAPI } from '../api/services';
-import { AuthContext } from '../contexts/AuthContext';
-import { cleanTramiteLabel, getClientFacingStatus } from '../utils/tramites';
+import { useAuth } from '../contexts/AuthContext';
 import type { TramiteListItem, TramiteStatsSummary } from '../types';
 
 const publicAssetUrl = (assetPath: string) =>
   `${(process.env.PUBLIC_URL || '').replace(/\/$/, '')}/${assetPath.replace(/^\//, '')}`;
 
 const DashboardPage: React.FC = () => {
-  const { user, isAdmin } = useContext(AuthContext);
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [tramites, setTramites] = useState<TramiteListItem[]>([]);
   const [summary, setSummary] = useState<TramiteStatsSummary | null>(null);
@@ -31,15 +29,18 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tramitesRes, summaryRes] = await Promise.all([
-          tramiteAPI.getTramites(),
-          tramiteAPI.getStatsSummary(),
-        ]);
+        const tramitesRes = await tramiteAPI.getTramites();
         if (tramitesRes.success) {
-          setTramites(tramitesRes.data.results || tramitesRes.data || []);
-        }
-        if (summaryRes.success) {
-          setSummary(summaryRes.data);
+          const tramitesData = tramitesRes.data;
+          setTramites(tramitesData.tramites || []);
+          if (tramitesData.resumen) {
+            setSummary({
+              total: tramitesData.resumen.total,
+              en_proceso: tramitesData.resumen.en_proceso,
+              completados: tramitesData.resumen.concluidos,
+              observados: tramitesData.resumen.observados,
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -51,7 +52,12 @@ const DashboardPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const statCards = [
+  const statCards: {
+    key: keyof TramiteStatsSummary;
+    label: string;
+    icon: React.ReactNode;
+    color: 'blue' | 'green' | 'gold' | 'notary' | 'neutral';
+  }[] = [
     {
       key: 'total',
       label: 'Total Trámites',

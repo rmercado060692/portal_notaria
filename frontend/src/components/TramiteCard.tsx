@@ -59,7 +59,6 @@ export const TramiteCard: React.FC<TramiteCardProps> = ({ tramite, onClick }) =>
   const actName = getDisplayActName(tramite);
   const statusLabel = getClientFacingStatus(tramite);
   const latestStatus = getLatestStatus(tramite);
-  const lastMovement = tramite.fechaconclusion || tramite.fechaescritura || tramite.fechacalificado || tramite.fechaingreso;
   const theme = getStatusTheme(statusLabel);
   const actVisual = useMemo(() => {
     const normalized = actName.toLowerCase();
